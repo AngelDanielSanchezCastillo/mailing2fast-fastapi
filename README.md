@@ -147,8 +147,10 @@ from mailing2fast_fastapi import (
     EmailMessage,
     EmailSender,
     EmailQueue,
+    MailManager,
     get_email_sender,
     get_email_queue,
+    get_mail_manager,
     startup_email_worker,
     shutdown_email_worker,
 )
@@ -164,7 +166,7 @@ async def startup():
 async def shutdown():
     await shutdown_email_worker()
 
-# Synchronous sending endpoint
+# Synchronous sending endpoint (default account)
 @app.post("/send-email")
 async def send_email(sender: EmailSender = Depends(get_email_sender)):
     email = EmailMessage(
@@ -188,11 +190,67 @@ async def queue_email(queue: EmailQueue = Depends(get_email_queue)):
     
     await queue.enqueue(email)
     return {"status": "queued"}
+
+# Using MailManager to access multiple accounts
+@app.get("/accounts")
+async def list_accounts(manager: MailManager = Depends(get_mail_manager)):
+    return {
+        "accounts": manager.list_accounts(),
+        "default": manager.get_default_account()
+    }
 ```
 
 ## Multiple SMTP Accounts
 
-Configure different accounts for different purposes:
+### Using MailManager (Recommended)
+
+The `MailManager` provides centralized management of multiple SMTP accounts:
+
+```python
+from mailing2fast_fastapi import get_manager, EmailMessage
+
+# Get the manager singleton
+manager = get_manager()
+
+# List all configured accounts
+accounts = manager.list_accounts()
+print(f"Available accounts: {accounts}")
+
+# Get sender for specific account
+support_sender = manager.get_sender("support")
+transactions_sender = manager.get_sender("transactions")
+
+# Send email using specific sender
+email = EmailMessage(
+    to=["customer@example.com"],
+    subject="Payment Confirmation",
+    html="<h1>Payment received!</h1>",
+)
+result = await transactions_sender.send_email(email)
+```
+
+### Using FastAPI Dependencies
+
+```python
+from functools import partial
+from fastapi import Depends
+from mailing2fast_fastapi import get_email_sender, EmailSender
+
+# Create dependency for specific account
+get_support_sender = partial(get_email_sender, account_name="support")
+
+@app.post("/send-support-email")
+async def send_support_email(sender: EmailSender = Depends(get_support_sender)):
+    email = EmailMessage(
+        to=["user@example.com"],
+        subject="Support Response",
+        html="<h1>We're here to help!</h1>",
+    )
+    result = await sender.send_email(email)
+    return {"status": result.status}
+```
+
+### Using smtp_account Parameter
 
 ```python
 email = EmailMessage(
@@ -271,6 +329,7 @@ mailing2fast-fastapi/
 │       ├── __version__.py
 │       ├── settings.py       # Pydantic settings
 │       ├── models.py          # Email schemas
+│       ├── manager.py         # Mail manager (multi-account)
 │       ├── sender.py          # Email sender
 │       ├── queue.py           # Redis queue
 │       ├── worker.py          # Background worker

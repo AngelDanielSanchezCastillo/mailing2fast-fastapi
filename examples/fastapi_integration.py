@@ -10,9 +10,11 @@ from mailing2fast_fastapi import (
     EmailQueue,
     EmailResult,
     EmailSender,
+    MailManager,
     get_email_queue,
     get_email_sender,
     get_email_worker,
+    get_mail_manager,
     shutdown_email_worker,
     startup_email_worker,
 )
@@ -73,6 +75,8 @@ async def root():
             "send_email": "/send-email",
             "queue_email": "/queue-email",
             "queue_stats": "/queue/stats",
+            "accounts": "/accounts",
+            "send_from_account": "/accounts/{account_name}/send",
         },
     }
 
@@ -149,6 +153,51 @@ async def clear_queues(queue: EmailQueue = Depends(get_email_queue)):
     await queue.clear_retry_queue()
     
     return {"status": "cleared"}
+
+
+# MailManager examples
+@app.get("/accounts")
+async def list_accounts(manager: MailManager = Depends(get_mail_manager)):
+    """List all configured SMTP accounts."""
+    return {
+        "accounts": manager.list_accounts(),
+        "default": manager.get_default_account(),
+    }
+
+
+@app.post("/accounts/{account_name}/send")
+async def send_from_specific_account(
+    account_name: str,
+    request: SendEmailRequest,
+    manager: MailManager = Depends(get_mail_manager),
+):
+    """Send email using a specific SMTP account via MailManager."""
+    # Check if account exists
+    if not manager.has_account(account_name):
+        return {
+            "error": f"Account '{account_name}' not found",
+            "available_accounts": manager.list_accounts(),
+        }
+    
+    # Get sender for specific account
+    sender = manager.get_sender(account_name)
+    
+    email = EmailMessage(
+        to=request.to,
+        subject=request.subject,
+        body=request.body,
+        html=request.html,
+    )
+    
+    result = await sender.send_email(email)
+    
+    return {
+        "status": result.status.value,
+        "account_used": account_name,
+        "message_id": result.message_id,
+        "sent_at": result.sent_at.isoformat() if result.sent_at else None,
+        "error": result.error,
+    }
 
 
 # Example: Send welcome email

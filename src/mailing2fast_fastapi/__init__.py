@@ -18,9 +18,11 @@ from .dependencies import (
     get_email_queue,
     get_email_sender,
     get_email_worker,
+    get_mail_manager,
     shutdown_email_worker,
     startup_email_worker,
 )
+from .manager import MailManager, get_manager
 from .models import (
     EmailAddress,
     EmailAttachment,
@@ -51,6 +53,7 @@ __all__ = [
     "EmailSender",
     "EmailQueue",
     "EmailWorker",
+    "MailManager",
     # Models
     "EmailMessage",
     "EmailAddress",
@@ -69,6 +72,8 @@ __all__ = [
     "EmailPriority",
     "settings",
     # FastAPI dependencies
+    "get_mail_manager",
+    "get_manager",
     "get_email_sender",
     "get_email_queue",
     "get_email_worker",
