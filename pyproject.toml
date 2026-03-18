@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mailing2fast-fastapi"
-version = "0.2.0"
+version = "0.2.1"
 description = "Simple and fast mailing module for FastAPI with async support and Redis queue management"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -36,13 +36,21 @@ dependencies = [
     "jinja2>=3.0.0",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
+    "black",
+    "ruff",
+    "mypy>=1.0.0",
+    "pre-commit",
+    "build",
+    "twine",
+]
+test = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
     "httpx>=0.24.0",
-    "mypy>=1.0.0",
+    "python-dotenv>=1.0.0",
     "aiosmtpd>=1.4.0",  # Mock SMTP server for testing
 ]
 
