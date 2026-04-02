@@ -4,7 +4,7 @@ Redis queue manager for email processing
 
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import redis.asyncio as redis
@@ -78,7 +78,7 @@ class EmailQueue:
         # Create queued email with metadata
         queued_email = QueuedEmail(
             email=email,
-            queued_at=datetime.utcnow(),
+            queued_at=datetime.now(timezone.utc),
             retry_count=0,
         )
         
@@ -150,7 +150,7 @@ class EmailQueue:
         
         # Calculate next retry time with exponential backoff
         delay = self.config.queue.retry_delay * (2 ** (queued_email.retry_count - 1))
-        queued_email.next_retry_at = datetime.utcnow() + timedelta(seconds=delay)
+        queued_email.next_retry_at = datetime.now(timezone.utc) + timedelta(seconds=delay)
         
         # Check if max retries exceeded
         if queued_email.retry_count >= self.config.queue.max_retries:
@@ -182,7 +182,7 @@ class EmailQueue:
         await self._ensure_connected()
         
         retry_queue = self.config.redis.retry_queue_name
-        now = datetime.utcnow().timestamp()
+        now = datetime.now(timezone.utc).timestamp()
         
         # Get all emails with score <= now (ready to retry)
         results = await self._redis.zrangebyscore(retry_queue, 0, now)

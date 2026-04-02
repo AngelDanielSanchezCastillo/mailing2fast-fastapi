@@ -2,7 +2,7 @@
 Email models and schemas for mailing2fast-fastapi
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
@@ -145,7 +145,7 @@ class QueuedEmail(BaseModel):
 
     email: EmailMessage = Field(..., description="Email message")
     queued_at: datetime = Field(
-        default_factory=datetime.utcnow, description="When email was queued"
+        default_factory=lambda: datetime.now(timezone.utc), description="When email was queued"
     )
     retry_count: int = Field(default=0, description="Number of retry attempts")
     last_error: Optional[str] = Field(default=None, description="Last error message")

@@ -4,7 +4,7 @@ Email sender module with SMTP support and rate limiting
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -56,7 +56,7 @@ class RateLimiter:
         Blocks until rate limit allows sending.
         """
         async with self._lock:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             
             # Clean up old timestamps
             self._cleanup_timestamps(now)
@@ -92,7 +92,7 @@ class RateLimiter:
                             f"Waiting {wait_seconds:.1f} seconds..."
                         )
                         await asyncio.sleep(wait_seconds)
-                        now = datetime.utcnow()
+                        now = datetime.now(timezone.utc)
                         self._cleanup_timestamps(now)
                     else:
                         break
@@ -182,7 +182,7 @@ class EmailSender:
             return EmailResult(
                 status=EmailStatus.SENT,
                 message_id=message_id,
-                sent_at=datetime.utcnow(),
+                sent_at=datetime.now(timezone.utc),
                 smtp_account=email.smtp_account or self.config.default_account,
             )
             
