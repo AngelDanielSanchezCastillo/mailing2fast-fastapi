@@ -2,6 +2,8 @@
 
 🚀 Simple and fast mailing module for FastAPI with async support and Redis queue management
 
+> 📖 **Conventions reference**: this package follows the [2fast-handbook](https://github.com/AngelDanielSanchezCastillo/2fast-handbook) for ecosystem conventions (structure, versioning, README, commits, release).
+
 > [!WARNING]
 > **Internal Use Notice**
 > 
